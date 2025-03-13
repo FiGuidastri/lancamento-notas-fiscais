@@ -11,17 +11,17 @@ COR_FUNDO = "#f0f0f0"
 FONTE_TITULO = ("Arial", 14, "bold")
 FONTE_NORMAL = ("Arial", 12)
 
+PARQUET_FILE = "notas.parquet"
+
 def centralizar_janela(janela):
-    # Centraliza a janela na tela
     largura_tela = janela.winfo_screenwidth()
     altura_tela = janela.winfo_screenheight()
     x = (largura_tela - LARGURA_JANELA) // 2
     y = (altura_tela - ALTURA_JANELA) // 2
     janela.geometry(f"{LARGURA_JANELA}x{ALTURA_JANELA}+{x}+{y}")
 
-# Função para salvar os dados no Excel
+# Função para salvar os dados no formato Parquet
 def salvar_dados():
-    # Acessa os campos globalmente
     global entry_responsavel, entry_numero_nota, entry_fornecedor, entry_valor_total, entry_data_emissao, entry_condicao_pagamento
 
     responsavel = entry_responsavel.get()
@@ -31,19 +31,16 @@ def salvar_dados():
     data_emissao = entry_data_emissao.get()
     condicao_pagamento = entry_condicao_pagamento.get()
 
-    # Verifica se todos os campos obrigatórios foram preenchidos
     if not all([responsavel, numero_nota, fornecedor, valor_total, data_emissao, condicao_pagamento]):
         messagebox.showwarning("Aviso", "Todos os campos devem ser preenchidos!")
         return
 
-    # Calcula a data de vencimento
     try:
         condicao_pagamento_dias = int(condicao_pagamento)
         data_vencimento = (datetime.strptime(data_emissao, "%d/%m/%Y") + timedelta(days=condicao_pagamento_dias)).strftime("%d/%m/%Y")
     except ValueError:
         data_vencimento = ""
 
-    # Cria um DataFrame com os dados
     novo_registro = pd.DataFrame([{
         "Responsável": responsavel,
         "Numero da nota": numero_nota,
@@ -59,16 +56,15 @@ def salvar_dados():
         "Lançamento": ""
     }])
 
-    # Verifica se o arquivo Excel já existe
-    if os.path.exists("notas.xlsx"):
-        df = pd.read_excel("notas.xlsx")
+    if os.path.exists(PARQUET_FILE):
+        df = pd.read_parquet(PARQUET_FILE)
         df = pd.concat([df, novo_registro], ignore_index=True)
     else:
         df = novo_registro
 
-    # Salva o DataFrame no arquivo Excel
-    df.to_excel("notas.xlsx", index=False)
+    df.to_parquet(PARQUET_FILE, index=False)
     messagebox.showinfo("Sucesso", "Nota salva com sucesso!")
+
 
 # Função para editar uma nota
 def editar_nota():
